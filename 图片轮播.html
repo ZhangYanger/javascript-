@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+	<title>焦点轮播图</title>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+			text-decoration: none;
+		}
+		body{
+			padding: 20px;
+		}
+		#container{
+			width: 600px;
+			height: 400px;
+			border:3px solid #333;
+			position: relative;
+			overflow: hidden;
+
+		}
+		#list{
+			width: 4200px;
+			height: 400px;
+			position: absolute;
+			z-index: 1;
+
+
+		}
+		#list img{
+			float: left;
+		}
+		#buttons{
+			position: absolute;
+			height: 10px;
+			width: 100px;
+			z-index: 2;
+			bottom:20px;
+			left: 250px;
+		}
+		#buttons span{
+			cursor: pointer;
+			float: left;
+			width: 10px;
+			height: 10px;
+			border:1px solid #fff;
+			border-radius: 50%;
+			background-color: #333;
+			margin-right: 5px;
+		}
+		#buttons .on{
+			background-color: orange;
+		}
+		 .arrow{
+		 	cursor: pointer;
+		 	font-size: 36px;
+		 	line-height: 36px;
+		 	z-index: 2;
+		 	height: 40px;
+		 	width: 40px;
+		 	font-weight: bold;
+		 	position: absolute;
+		 	text-align: center;
+		 	background-color: rgba(0,0,0,0.3);
+		 	color: #fff;
+		 	top:180px;
+		 	display: none;
+		 }
+		 .arrow:hover{
+		 	background-color: rgba(0,0,0,0.7);
+		 }
+		 #container:hover .arrow{
+		 	display: block;
+		 }
+		 #prev{
+		 	left: 20px;
+		 }
+		 #next{
+		 	right: 20px;
+		 }
+	</style>
+	<script type="text/javascript">
+		window.onload=function(){
+			var container=document.getElementById("container");
+			var list=document.getElementById("list");
+			var buttons=document.getElementById("buttons").getElementsByTagName("span");
+			var prev=document.getElementById("prev");
+			var next=document.getElementById("next");
+			var index=1;//当前量亮的是哪个小圆点
+			var animated=false;//是否正在执行动画
+			var timer;//定时器
+			function showButton(){//index-1所对应的为0
+				for(var i=0;i<buttons.length;i++){
+                   if(buttons[i].className=="on"){
+                       buttons[i].className="";
+                       break;
+                   }
+				}
+				buttons[index-1].className="on";
+
+			}
+			// next.onclick=function(){
+			// 		list.style.left=parseInt(list.style.left)-600+"px";//parseInt函数将一个字符串转换为数字，相当于把“-600px”的px忽略掉了，只取600		
+			// }
+			// prev.onclick=function(){
+			// 		list.style.left=parseInt(list.style.left)+600+"px";//parseInt函数将一个字符串转换为数字，相当于把“-600px”的px忽略掉了，只取600			
+			// }
+
+			function animate(offset){//将箭头点击事件封装成一个函数	
+			   var newLeft=parseInt(list.style.left)+offset;
+			   //设置动画效果
+			   var time=300;//位移总的时间；
+			   var interval=10;//位移间隔时间,可以通过设置time和interval来改变切换速度
+			   var speed=offset/(time/interval);//求出每一次的位移量
+			   //判断是否要位移
+			   function go(){
+			 	if((speed<0&&parseInt(list.style.left)>newLeft)||(speed>0&&parseInt(list.style.left)<newLeft)){//开始做位移
+                         list.style.left=parseInt(list.style.left)+speed+"px";
+                         setTimeout(go,interval);
+                       
+                    }else{
+                    	animated=false;// 动画执行完毕
+                        list.style.left=newLeft+"px";
+                       if(newLeft>-600){//附属图1 left值为-3600 比-3000要小-->附属图5 left值为0 比-600要大-->
+                      list.style.left= -3000 +"px";
+				     }
+				       if(newLeft<-3000){
+                        list.style.left= -600 +"px";
+				      }
+                    }
+			  } //判断是否要位移函数结束
+               go();
+			}//animate()函数结束
+
+			//给右箭头添加点击事件
+			next.onclick=function(){
+				if(index==5){//不能让index超过5
+                  index=1;
+				}
+				else{
+					index+=1;//小圆点向后移动一个
+				}
+				
+				showButton();//显示小圆点
+				if(animated == false){
+                    animate(-600);
+				}				
+			}
+			//给左箭头添加点击事件
+			prev.onclick=function(){
+				if(index==0){//不能让index超过5
+                  index=5;
+				}
+				else{
+					index-=1;//小圆点向后移动一个
+				}
+				showButton();
+				if(animated == false){
+                    animate(600);
+				}
+				
+			}//左箭头点击函数结束
+
+			//给五个圆点加上事件
+			for(var i=0;i<buttons.length;i++){
+				if(this.className=="on"){//优化：如果打开的图片，是当前已经打开的图片，就不需要执行后面的代码了，直接停止执行；比如当显示的是第一张图片时，还是点击第一个按钮，后面的程序就不会再执行了
+                    return;
+				}
+                buttons[i].onclick=function(){
+                         var myIndex=parseInt(this.getAttribute("index"));//取得当前的index值
+                          var offset=-600*(myIndex-index);//得到每次点击小圆点时的偏移量
+                         if(animated == false){
+                          animate(offset);
+				}
+                          index=myIndex;//切换完之后更新一下当前的index值
+                          showButton();//小圆点也跟着切换
+                          //debugger;//加断点
+                }
+
+			}//圆点点击事件结束
+
+            //实现自动播放
+			function autoplay(){//设置一个定时器，每隔3秒点一下右箭头
+				timer=setInterval(function(){
+					next.onclick();
+				},3000);
+			}
+			//停止自动播放
+			function stop(){
+				clearInterval(timer);
+			}
+			
+			container.onmouseover = stop;
+			container.onmouseout = autoplay;
+			autoplay();		
+		}
+
+	</script>
+</head>
+<body>
+<div id="container">
+	<div id="list" style="left: -600px;">
+		<img src="img/5.jpg" alt="5">
+		<img src="img/1.jpg" alt="1">
+		<img src="img/2.jpg" alt="2">
+		<img src="img/3.jpg" alt="3">
+		<img src="img/4.jpg" alt="4">
+	    <img src="img/5.jpg" alt="5"><!-- 附属图left值为0 比-600要大-->
+		<img src="img/1.jpg" alt="5"><!-- 附属图left值为-3600 比-3000要小-->
+		
+	</div>
+	<div id="buttons">
+		<span index="1" class="on"></span>
+		<span index="2"></span>
+		<span index="3"></span>
+		<span index="4"></span>
+		<span index="5"></span>
+	</div>
+	<a href="javascript:" id="prev" class="arrow">&lt;</a>
+	<a href="javascript:" id="next" class="arrow">&gt;</a>
+</div>
+</body>
+</html>
